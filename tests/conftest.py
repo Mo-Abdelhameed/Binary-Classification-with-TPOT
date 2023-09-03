@@ -9,6 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from Classifier import Classifier
+from src.preprocessing.pipeline import run_pipeline
 from src.schema.data_schema import BinaryClassificationSchema
 from src.serve import create_app
 from src.serve_utils import get_model_resources
@@ -18,6 +19,10 @@ from src.train import run_training
 @pytest.fixture
 def classifier(sample_train_data, schema_provider):
     """Define classifier fixture"""
+    target = sample_train_data[schema_provider.target]
+    sample_train_data = sample_train_data.drop(columns=schema_provider.target)
+    sample_train_data = run_pipeline(sample_train_data, schema_provider, training=True)
+    sample_train_data[schema_provider.target] = target
     classifier = Classifier(sample_train_data, schema_provider)
     return classifier
 

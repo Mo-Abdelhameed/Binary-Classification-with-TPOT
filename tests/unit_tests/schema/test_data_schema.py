@@ -49,7 +49,7 @@ def test_get_allowed_values_for_categorical_feature(schema_provider):
     allowed_values = schema_provider.get_allowed_values_for_categorical_feature("categorical_feature_2")
 
     # Then
-    assert allowed_values == [1, 2, 3, 4, 5]
+    assert allowed_values == ["A", "B", "C", "D", "E"]
 
     # When / Then
     with pytest.raises(ValueError):

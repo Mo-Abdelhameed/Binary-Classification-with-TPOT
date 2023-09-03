@@ -164,8 +164,8 @@ def test_valid_inference_request_body(SampleRequestBodyModel):
                         "id": "1232",
                         "numeric_feature_1": 50,
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "1",
-                        "categorical_feature_2": "3",
+                        "categorical_feature_1": "A",
+                        "categorical_feature_2": "B",
                     }
                 ]
             }
@@ -183,15 +183,15 @@ def test_valid_inference_request_body(SampleRequestBodyModel):
                         "id": "123",
                         "numeric_feature_1": 50,
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "1",
-                        "categorical_feature_2": "2",
+                        "categorical_feature_1": "A",
+                        "categorical_feature_2": "B",
                     },
                     {
                         "id": "456",
                         "numeric_feature_1": 60,
                         "numeric_feature_2": 1.5,
-                        "categorical_feature_1": "1",
-                        "categorical_feature_2": "3",
+                        "categorical_feature_1": "B",
+                        "categorical_feature_2": "C",
                     },
                 ]
             }
@@ -209,8 +209,8 @@ def test_valid_inference_request_body(SampleRequestBodyModel):
                         "id": "1232",
                         "numeric_feature_1": 50,
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "3",
-                        "categorical_feature_2": "2",
+                        "categorical_feature_1": "A",
+                        "categorical_feature_2": "D",
                     }
                 ],
                 "extra": "key",
@@ -250,8 +250,8 @@ def test_invalid_inference_request_body(SampleRequestBodyModel):
                     {
                         "id": "1232",
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "2",
-                        "categorical_feature_2": "2",
+                        "categorical_feature_1": "A",
+                        "categorical_feature_2": "A",
                     }
                 ]
             }
@@ -266,14 +266,14 @@ def test_invalid_inference_request_body(SampleRequestBodyModel):
                         "id": "123",
                         "numeric_feature_1": 50,
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "1",
-                        "categorical_feature_2": "1",
+                        "categorical_feature_1": "A",
+                        "categorical_feature_2": "B",
                     },
                     {
                         "id": "456",
                         "numeric_feature_1": 60,
-                        "categorical_feature_1": "3",
-                        "categorical_feature_2": "3",
+                        "categorical_feature_1": "A",
+                        "categorical_feature_2": "B",
                     },
                 ]
             }

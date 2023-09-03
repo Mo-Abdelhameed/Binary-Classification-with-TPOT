@@ -36,5 +36,6 @@ def run_pipeline(input_data: pd.DataFrame, schema: BinaryClassificationSchema, t
             input_data[f].fillna(imputation_dict.get(f, input_data[f].mode()[0]), inplace=True)
         input_data = normalize(input_data, schema, scaler='predict')
         input_data = encode(input_data, schema, encoder='predict')
+        print(input_data)
 
     return input_data

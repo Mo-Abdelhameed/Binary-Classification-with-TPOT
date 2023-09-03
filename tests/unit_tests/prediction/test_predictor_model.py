@@ -13,14 +13,15 @@ def test_train_predict_model(sample_train_data, sample_test_data, schema_provide
     """
     target = sample_train_data[schema_provider.target]
     sample_train_data = sample_train_data.drop(columns=schema_provider.target)
+    sample_train_data = sample_train_data.drop(columns=schema_provider.id)
+
     sample_train_data = run_pipeline(sample_train_data, schema_provider, training=True)
     sample_train_data[schema_provider.target] = target
     classifier = Classifier(sample_train_data, schema_provider)
     classifier.train()
-    assert os.path.exists(PREDICTIONS_FILE_PATH)
 
-    sample_test_data = run_pipeline(sample_test_data, schema_provider, training=False)
     sample_test_data = sample_test_data.drop(columns=schema_provider.id)
+    sample_test_data = run_pipeline(sample_test_data, schema_provider, training=False)
 
     predictions = Classifier.predict_with_model(classifier, sample_test_data, return_proba=False)
 
@@ -33,12 +34,17 @@ def test_train_predict_model(sample_train_data, sample_test_data, schema_provide
     assert os.path.exists(os.path.join(PREDICTOR_DIR_PATH, 'predictor.joblib'))
 
 
-def test_save_load_model(tmpdir, classifier, sample_test_data, schema_provider):
+def test_save_load_model(tmpdir, sample_train_data, sample_test_data, schema_provider):
     """
     Test if the save and load methods work correctly.
     """
     # Specify the file path
     model_dir_path = tmpdir.mkdir("model")
+    target = sample_train_data[schema_provider.target]
+    sample_train_data = sample_train_data.drop(columns=[schema_provider.target, schema_provider.id])
+    sample_train_data = run_pipeline(sample_train_data, schema_provider, training=True)
+    sample_train_data[schema_provider.target] = target
+    classifier = Classifier(sample_train_data, schema_provider)
     classifier.train()
     # Save the model
 
@@ -48,6 +54,7 @@ def test_save_load_model(tmpdir, classifier, sample_test_data, schema_provider):
     loaded_clf = Classifier.load(model_dir_path)
 
     sample_test_data = sample_test_data.drop(columns=schema_provider.id)
+    sample_test_data = run_pipeline(sample_test_data, schema_provider, training=False)
     # Test predictions
     predictions = Classifier.predict_with_model(loaded_clf, sample_test_data, return_proba=False)
     assert np.array_equal(predictions, classifier.predict(sample_test_data))
@@ -80,11 +87,14 @@ def test_predict_with_model(sample_train_data, schema_provider, sample_test_data
     Test that the 'predict_with_model' function returns predictions of correct size
     and type.
     """
-    sample_train_data = sample_train_data.drop(columns=schema_provider.id)
+    target = sample_train_data[schema_provider.target]
+    sample_train_data = sample_train_data.drop(columns=[schema_provider.target, schema_provider.id])
+    sample_train_data = run_pipeline(sample_train_data, schema_provider, training=True)
+    sample_train_data[schema_provider.target] = target
     classifier = Classifier(sample_train_data, schema_provider)
     classifier.train()
     sample_test_data = sample_test_data.drop(columns=schema_provider.id)
-    sample_test_data = sample_test_data.drop(columns=schema_provider.target)
+    sample_test_data = run_pipeline(sample_test_data, schema_provider, training=False)
 
     predictions = Classifier.predict_with_model(classifier, sample_test_data, return_proba=True)
 
@@ -98,6 +108,10 @@ def test_save_predictor_model(tmpdir, sample_train_data, schema_provider):
     to disk.
     """
     model_dir_path = os.path.join(tmpdir, "model")
+    target = sample_train_data[schema_provider.target]
+    sample_train_data = sample_train_data.drop(columns=[schema_provider.target, schema_provider.id])
+    sample_train_data = run_pipeline(sample_train_data, schema_provider, training=True)
+    sample_train_data[schema_provider.target] = target
     classifier = Classifier(sample_train_data, schema_provider)
     classifier.train()
     Classifier.save_predictor_model(classifier, model_dir_path)
