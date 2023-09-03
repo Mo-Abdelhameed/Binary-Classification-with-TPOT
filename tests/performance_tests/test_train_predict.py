@@ -59,6 +59,7 @@ def run_training_and_record(
     tmpdir,
     input_schema_dir: str,
     train_dir: str,
+
 ) -> Dict[str, Union[str, float]]:
     """Run training process and record the memory usage and execution time.
 
@@ -110,6 +111,7 @@ def run_prediction_and_record(
     tmpdir,
     predictor_dir_path: str,
     test_dir: str,
+    input_schema_dir: str
 ) -> Tuple[str, float, float]:
     """Run prediction process and record the memory usage and execution time.
 
@@ -117,6 +119,7 @@ def run_prediction_and_record(
         tmpdir: Temporary directory.
         predictor_dir_path (str): Path to predictor file.
         test_dir (str): Path to testing data directory.
+        input_schema_dir (str): Path to schema directory
 
     Returns:
         Tuple[str, float, float]: Tuple containing the path of prediction file,
@@ -135,6 +138,7 @@ def run_prediction_and_record(
         test_dir=test_dir,  # re-using the train data for prediction
         predictor_dir=predictor_dir_path,
         predictions_file_path=predictions_file_path,
+        input_schema_dir=input_schema_dir,
         return_proba=True
     )
 
@@ -167,6 +171,7 @@ def test_train_predict_performance(
         train_predict_perf_results_path (str): Path to the file where training and
         prediction performance results will be stored.
     """
+
     # If the results file already exists, delete it
     delete_file_if_exists(train_predict_perf_results_path)
 
@@ -177,6 +182,10 @@ def test_train_predict_performance(
 
         # Generate sample data
         schema_dict, sample_data = generate_schema_and_data(num_rows, num_features)
+
+        for f in schema_dict['features']:
+            if f['dataType'] == 'CATEGORICAL':
+                sample_data[f['name']] = sample_data[f['name']].astype(str)
 
         # save schema dict and train data from where the training workflow will
         # read them
@@ -189,6 +198,12 @@ def test_train_predict_performance(
             tmpdir,
             input_schema_dir,
             train_dir,
+        )
+
+        sample_data.drop(columns=[schema_dict['target']['name']], inplace=True)
+
+        input_schema_dir, train_dir = store_schema_and_data(
+            tmpdir, schema_dict, sample_data
         )
 
         # Assert that the model artifacts are saved in the correct paths
@@ -217,6 +232,7 @@ def test_train_predict_performance(
             tmpdir,
             results["predictor_dir_path"],
             train_dir,
+            input_schema_dir
         )
 
         # Assert that the predictions file is saved in the correct path

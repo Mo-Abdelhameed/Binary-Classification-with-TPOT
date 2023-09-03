@@ -1,61 +1,10 @@
 import os
-import pandas as pd
-import numpy as np
 import json
 import pytest
-from serve_utils import get_model_resources
-from train import run_training
+from src.serve_utils import get_model_resources
+from src.train import run_training
 from fastapi.testclient import TestClient
-from serve import create_app
-
-
-@pytest.fixture
-def schema_dict():
-    """Fixture to create a sample schema for testing"""
-    valid_schema = {
-        "title": "test dataset",
-        "description": "test dataset",
-        "modelCategory": "binary_classification",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "id", "description": "unique identifier."},
-        "target": {
-            "name": "target_field",
-            "description": "some target desc.",
-            "classes": ["A", "B"],
-        },
-        "features": [
-            {
-                "name": "numeric_feature_1",
-                "description": "some desc.",
-                "dataType": "NUMERIC",
-                "example": 50,
-                "nullable": True,
-            },
-            {
-                "name": "numeric_feature_2",
-                "description": "some desc.",
-                "dataType": "NUMERIC",
-                "example": 0.5,
-                "nullable": False,
-            },
-            {
-                "name": "categorical_feature_1",
-                "description": "some desc.",
-                "dataType": "CATEGORICAL",
-                "categories": ["A", "B", "C"],
-                "nullable": True,
-            },
-            {
-                "name": "categorical_feature_2",
-                "description": "some desc.",
-                "dataType": "CATEGORICAL",
-                "categories": ["P", "Q", "R", "S", "T"],
-                "nullable": False,
-            },
-        ],
-    }
-    return valid_schema
+from src.serve import create_app
 
 
 @pytest.fixture
@@ -65,33 +14,6 @@ def train_dir(sample_train_data, tmpdir, train_data_file_name):
     train_data_file_path = train_data_dir.join(train_data_file_name)
     sample_train_data.to_csv(train_data_file_path, index=False)
     return str(train_data_dir)
-
-
-@pytest.fixture
-def sample_data():
-    """Fixture to create a larger sample DataFrame for testing"""
-    np.random.seed(0)
-    N = 100
-    data = pd.DataFrame(
-        {
-            "id": range(1, N + 1),
-            "numeric_feature_1": np.random.randint(1, 100, size=N),
-            "numeric_feature_2": np.random.normal(0, 1, size=N),
-            "categorical_feature_1": np.random.choice(["A", "B", "C"], size=N),
-            "categorical_feature_2": np.random.choice(
-                ["P", "Q", "R", "S", "T"], size=N
-            ),
-            "target_field": np.random.choice(["A", "B"], size=N),
-        }
-    )
-    return data
-
-
-@pytest.fixture
-def sample_train_data(sample_data):
-    """Fixture to create a larger sample DataFrame for testing"""
-    N_train = int(len(sample_data) * 0.8)
-    return sample_data.head(N_train)
 
 
 @pytest.fixture
@@ -160,43 +82,6 @@ def test_resources_dir_path(tmpdir):
     tmpdir.mkdir("test_resources")
     test_resources_path = os.path.join(tmpdir, "test_resources")
     return test_resources_path
-
-
-@pytest.fixture
-def sample_request_data(schema_dict):
-    # Define a fixture for test request data
-    sample_dict = {
-        # made up id for this test
-        schema_dict["id"]["name"]: "42",
-    }
-    for feature in schema_dict["features"]:
-        if feature["dataType"] == "NUMERIC":
-            sample_dict[feature["name"]] = feature["example"]
-        elif feature["dataType"] == "CATEGORICAL":
-            sample_dict[feature["name"]] = feature["categories"][0]
-    return {"instances": [{**sample_dict}]}
-
-
-@pytest.fixture
-def sample_response_data(schema_dict):
-    # Define a fixture for expected response
-    return {
-        "status": "success",
-        "message": "",
-        "timestamp": "...varies...",
-        "requestId": "...varies...",
-        "targetClasses": schema_dict["target"]["classes"],
-        "targetDescription": schema_dict["target"]["description"],
-        "predictions": [
-            {
-                "sampleId": "42",
-                # unknown because we don't know the predicted class
-                "predictedClass": "unknown",
-                # predicted probabilities are made up for this test
-                "predictedProbabilities": [0.5, 0.5],
-            }
-        ],
-    }
 
 
 @pytest.fixture

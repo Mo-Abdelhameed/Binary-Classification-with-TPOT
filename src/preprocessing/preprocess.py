@@ -1,11 +1,9 @@
-import numpy as np
-import pandas as pd
 import os
+import pandas as pd
 from typing import Dict, Tuple, Any
 from schema.data_schema import BinaryClassificationSchema
 from sklearn.preprocessing import StandardScaler
 from feature_engine.encoding import OneHotEncoder
-from scipy.stats import zscore
 from joblib import dump, load
 from config import paths
 from imblearn.over_sampling import SMOTE
@@ -39,19 +37,6 @@ def impute_numeric(input_data: pd.DataFrame, column: str, value='median') -> Tup
     return input_data, value
 
 
-def indicate_missing_values(input_data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Replaces empty strings with NaN in a dataframe.
-
-    Args:
-        input_data (ps.DataFrame): The dataframe to be processed.
-
-    Returns:
-        A dataframe after replacing empty strings with NaN.
-    """
-    return input_data.replace("", np.nan)
-
-
 def impute_categorical(input_data: pd.DataFrame, column: str) -> Tuple[pd.DataFrame, Any]:
     """
     Imputes the missing categorical values in the given dataframe column.
@@ -76,19 +61,6 @@ def impute_categorical(input_data: pd.DataFrame, column: str) -> Tuple[pd.DataFr
     return input_data, value
 
 
-def drop_all_nan_features(input_data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Drops columns that only contain NaN values.
-
-    Args:
-        input_data (pd.DataFrame): The dataframe to be processed.
-
-    Returns:
-        A dataframe after dropping NaN columns
-    """
-    return input_data.dropna(axis=1, how='all')
-
-
 def percentage_of_missing_values(input_data: pd.DataFrame) -> Dict:
     """
     Calculates the percentage of missing values in each column of a given dataframe.
@@ -101,33 +73,6 @@ def percentage_of_missing_values(input_data: pd.DataFrame) -> Dict:
     """
     columns_with_missing_values = input_data.columns[input_data.isna().any()]
     return (input_data[columns_with_missing_values].isna().mean().sort_values(ascending=False) * 100).to_dict()
-
-
-def drop_constant_features(input_data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Drops columns that contain only one value.
-
-    Args:
-        input_data (pd.DataFrame): The dataframe to be processed.
-
-    Returns:
-        A dataframe after dropping constant columns
-    """
-    constant_columns = input_data.columns[input_data.nunique() == 1]
-    return input_data.drop(columns=constant_columns)
-
-
-def drop_duplicate_features(input_data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Drops columns that are exactly the same and keeps only one of them.
-
-    Args:
-        input_data (pd.DataFrame): The dataframe to be processed.
-
-    Returns:
-        A dataframe after dropping duplicated columns
-    """
-    return input_data.T.drop_duplicates().T
 
 
 def encode(input_data: pd.DataFrame, schema: BinaryClassificationSchema, encoder=None) -> pd.DataFrame:
@@ -156,24 +101,8 @@ def encode(input_data: pd.DataFrame, schema: BinaryClassificationSchema, encoder
         input_data = encoder.transform(input_data)
         dump(encoder, paths.ENCODER_FILE)
     except ValueError as e:
-        print(e)
         logger.info('No categorical variables in the data. No encoding performed!')
     return input_data
-
-
-def drop_mostly_missing_columns(input_data: pd.DataFrame, thresh=0.6) -> pd.DataFrame:
-    """
-    Drops columns in which NaN values exceeds a certain threshold.
-
-    Args:
-        input_data: (pd.DataFrame): the data to be processed.
-        thresh (float): The threshold to use.
-
-    Returns:
-        A dataframe after dropping the specified columns.
-    """
-    threshold = int(thresh * len(input_data))
-    return input_data.dropna(axis=1, thresh=threshold)
 
 
 def normalize(input_data: pd.DataFrame, schema: BinaryClassificationSchema, scaler=None) -> pd.DataFrame:
@@ -202,33 +131,6 @@ def normalize(input_data: pd.DataFrame, schema: BinaryClassificationSchema, scal
         scaler = load(paths.SCALER_FILE)
     input_data[numeric_features] = scaler.transform(input_data[numeric_features])
     return input_data
-
-
-def remove_outliers_zscore(input_data: pd.DataFrame, column: str, target: pd.Series = None)\
-        -> (pd.DataFrame, pd.Series):
-    """
-    Removes rows that have been identified as outliers using the z-score method according to a given column.
-
-    Args:
-        input_data (pd.DataFrame): The dataframe to be processed.
-        column (str): The name of the column.
-        target (pd.Series): The targets series associated with the input dataframe.
-    """
-
-    if column not in input_data.columns:
-        return input_data, target
-    input_data[column] = input_data[column].astype(np.float64)
-    threshold = 3
-    z_scores = np.abs(zscore(input_data[column]))
-    condition = z_scores < threshold
-    after_removal = input_data[condition]
-    if (after_removal.shape[0] / input_data.shape[0]) < 0.1:
-        if target is not None:
-            return input_data[condition], target[condition]
-        else:
-            return input_data[condition], None
-    else:
-        return input_data, target
 
 
 def handle_class_imbalance(

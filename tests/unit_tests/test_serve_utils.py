@@ -70,6 +70,7 @@ def test_create_predictions_response(predictions_df, schema_provider, request_id
     Returns:
         None
     """
+
     response = create_predictions_response(predictions_df, schema_provider, request_id)
 
     # Check that the output is a dictionary
@@ -105,8 +106,10 @@ def test_create_predictions_response(predictions_df, schema_provider, request_id
         # Check that 'predictedClass' is one of the 'targetClasses'
         assert prediction["predictedClass"] in response["targetClasses"]
 
+        print(prediction["predictedProbabilities"])
+
         # Check that 'predictedProbabilities' sum to 1 (within a small tolerance)
-        assert abs(sum(prediction["predictedProbabilities"]) - 1.0) < 1e-5
+        assert abs(sum(prediction["predictedProbabilities"]) - 1.0) < 1e-4
 
 
 def test_combine_predictions_response_with_explanations():

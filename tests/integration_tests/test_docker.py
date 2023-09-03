@@ -38,13 +38,13 @@ def move_files_to_temp_dir(src_dir: str, dst_dir: str, file_list: List[str]) -> 
 
 @pytest.fixture
 def mounted_volume(
-    tmpdir: str,
-    train_dir: str,
-    train_data_file_name: str,
-    test_dir: str,
-    test_data_file_name: str,
-    input_schema_dir: str,
-    input_schema_file_name: str,
+        tmpdir: str,
+        train_dir: str,
+        train_data_file_name: str,
+        test_dir: str,
+        test_data_file_name: str,
+        input_schema_dir: str,
+        input_schema_file_name: str,
 ) -> str:
     """
     Prepares and returns a directory with a specific structure and files for the
@@ -193,11 +193,11 @@ def test_prediction_task(mounted_volume: str, docker_image: str, container_name:
 
 @pytest.mark.slow
 def test_inference_service(
-    mounted_volume: str,
-    docker_image: str,
-    container_name: str,
-    sample_request_data: dict,
-    sample_response_data: dict,
+        mounted_volume: str,
+        docker_image: str,
+        container_name: str,
+        sample_request_data: dict,
+        sample_response_data: dict,
 ):
     """
     Integration test for the inference service.
@@ -259,13 +259,13 @@ def test_inference_service(
         print(response_data["targetDescription"])
         print(sample_response_data["targetDescription"])
         assert (
-            response_data["predictions"][0]["predictedClass"]
-            in sample_response_data["targetClasses"]
+                response_data["predictions"][0]["predictedClass"]
+                in sample_response_data["targetClasses"]
         )
 
         assert (
-            response_data["predictions"][0]["predictedClass"]
-            in sample_response_data["targetClasses"]
+                response_data["predictions"][0]["predictedClass"]
+                in sample_response_data["targetClasses"]
         )
 
     except ContainerError as exc:

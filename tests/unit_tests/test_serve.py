@@ -2,7 +2,6 @@ import json
 from unittest.mock import patch
 
 import pandas as pd
-import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
@@ -20,40 +19,6 @@ def train_dir(sample_train_data, tmpdir, train_data_file_name):
     train_data_file_path = train_data_dir.join(train_data_file_name)
     sample_train_data.to_csv(train_data_file_path, index=False)
     return str(train_data_dir)
-
-
-@pytest.fixture
-def sample_data():
-    """Fixture to create a larger sample DataFrame for testing"""
-    np.random.seed(0)
-    N = 100
-    data = pd.DataFrame(
-        {
-            "id": range(1, N + 1),
-            "numeric_feature_1": np.random.randint(1, 100, size=N),
-            "numeric_feature_2": np.random.normal(0, 1, size=N),
-            "categorical_feature_1": np.random.choice(["A", "B", "C"], size=N),
-            "categorical_feature_2": np.random.choice(
-                ["P", "Q", "R", "S", "T"], size=N
-            ),
-            "target_field": np.random.choice(["A", "B"], size=N),
-        }
-    )
-    return data
-
-
-@pytest.fixture
-def sample_train_data(sample_data):
-    """Fixture to create a larger sample DataFrame for testing"""
-    N_train = int(len(sample_data) * 0.8)
-    return sample_data.head(N_train)
-
-
-@pytest.fixture
-def sample_test_data(sample_data):
-    """Fixture to create a larger sample DataFrame for testing"""
-    N_test = int(len(sample_data) * 0.2)
-    return sample_data.tail(N_test)
 
 
 @pytest.fixture
@@ -89,7 +54,6 @@ def saved_schema_dir():
 @pytest.fixture
 def predictor_dir(tmpdir):
     return tmpdir.mkdir('predictor')
-
 
 
 @pytest.fixture

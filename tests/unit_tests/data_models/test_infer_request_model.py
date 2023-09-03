@@ -5,69 +5,6 @@ from data_models.infer_request_model import (
     create_instance_model,
     get_inference_request_body_model,
 )
-from src.schema.data_schema import BinaryClassificationSchema
-
-
-@pytest.fixture
-def schema_dict():
-    """Fixture to create a sample schema for testing"""
-    valid_schema = {
-        "title": "test dataset",
-        "description": "test dataset",
-        "modelCategory": "binary_classification",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "id", "description": "unique identifier."},
-        "target": {
-            "name": "target_field",
-            "description": "some target desc.",
-            "classes": ["A", "B"],
-            "positiveClass": "A",
-        },
-        "features": [
-            {
-                "name": "numeric_feature_1",
-                "description": "some desc.",
-                "dataType": "NUMERIC",
-                "example": 50,
-                "nullable": True,
-            },
-            {
-                "name": "numeric_feature_2",
-                "description": "some desc.",
-                "dataType": "NUMERIC",
-                "example": 0.5,
-                "nullable": False,
-            },
-            {
-                "name": "categorical_feature_1",
-                "description": "some desc.",
-                "dataType": "CATEGORICAL",
-                "categories": ["A", "B", "C"],
-                "nullable": True,
-            },
-            {
-                "name": "categorical_feature_2",
-                "description": "some desc.",
-                "dataType": "CATEGORICAL",
-                "categories": ["P", "Q", "R", "S", "T"],
-                "nullable": False,
-            },
-        ],
-    }
-    return valid_schema
-
-
-@pytest.fixture
-def schema_provider(schema_dict):
-    """Fixture to create a sample schema for testing"""
-    return BinaryClassificationSchema(schema_dict)
-
-
-@pytest.fixture
-def sample_request_data(sample_instance_data):
-    # Define a fixture for test data
-    return {"instances": [sample_instance_data]}
 
 
 def test_can_create_instance_model(schema_provider):
@@ -227,8 +164,8 @@ def test_valid_inference_request_body(SampleRequestBodyModel):
                         "id": "1232",
                         "numeric_feature_1": 50,
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "A",
-                        "categorical_feature_2": "P",
+                        "categorical_feature_1": "1",
+                        "categorical_feature_2": "3",
                     }
                 ]
             }
@@ -246,15 +183,15 @@ def test_valid_inference_request_body(SampleRequestBodyModel):
                         "id": "123",
                         "numeric_feature_1": 50,
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "A",
-                        "categorical_feature_2": "P",
+                        "categorical_feature_1": "1",
+                        "categorical_feature_2": "2",
                     },
                     {
                         "id": "456",
                         "numeric_feature_1": 60,
                         "numeric_feature_2": 1.5,
-                        "categorical_feature_1": "B",
-                        "categorical_feature_2": "Q",
+                        "categorical_feature_1": "1",
+                        "categorical_feature_2": "3",
                     },
                 ]
             }
@@ -272,8 +209,8 @@ def test_valid_inference_request_body(SampleRequestBodyModel):
                         "id": "1232",
                         "numeric_feature_1": 50,
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "A",
-                        "categorical_feature_2": "P",
+                        "categorical_feature_1": "3",
+                        "categorical_feature_2": "2",
                     }
                 ],
                 "extra": "key",
@@ -313,8 +250,8 @@ def test_invalid_inference_request_body(SampleRequestBodyModel):
                     {
                         "id": "1232",
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "A",
-                        "categorical_feature_2": "P",
+                        "categorical_feature_1": "2",
+                        "categorical_feature_2": "2",
                     }
                 ]
             }
@@ -329,14 +266,14 @@ def test_invalid_inference_request_body(SampleRequestBodyModel):
                         "id": "123",
                         "numeric_feature_1": 50,
                         "numeric_feature_2": 0.5,
-                        "categorical_feature_1": "A",
-                        "categorical_feature_2": "P",
+                        "categorical_feature_1": "1",
+                        "categorical_feature_2": "1",
                     },
                     {
                         "id": "456",
                         "numeric_feature_1": 60,
-                        "categorical_feature_1": "B",
-                        "categorical_feature_2": "Q",
+                        "categorical_feature_1": "3",
+                        "categorical_feature_2": "3",
                     },
                 ]
             }

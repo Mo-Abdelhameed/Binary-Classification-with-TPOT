@@ -62,6 +62,7 @@ def run_batch_predictions(
         test_dir: str = paths.TEST_DIR,
         predictor_dir: str = paths.PREDICTOR_DIR_PATH,
         predictions_file_path: str = paths.PREDICTIONS_FILE_PATH,
+        input_schema_dir: str = paths.INPUT_SCHEMA_DIR,
         return_proba=False
 ) -> None:
     """
@@ -78,19 +79,19 @@ def run_batch_predictions(
             test_dir (str): Path to the directory containing test data
             predictor_dir (str): Path to the directory containing the predictor model.
             predictions_file_path (str): Path in which to store the prediction file.
+            input_schema_dir (str): Path to the schema file of the data
             return_proba (bool): If true, outputs the probabilities of the target classes.
         """
     x_test = read_csv_in_directory(test_dir)
 
     model = Classifier.load(predictor_dir)
-    data_schema = load_json_data_schema(paths.INPUT_SCHEMA_DIR)
+    data_schema = load_json_data_schema(input_schema_dir)
     ids = x_test[data_schema.id]
     x_test = x_test.drop(columns=data_schema.id)
-
     x_test = run_pipeline(x_test, data_schema, training=False)
 
     logger.info("Making predictions...")
-    predictions_arr = Classifier.predict_with_model(model, x_test, return_proba=return_proba)
+    predictions_arr = Classifier.predict_with_model(model, x_test, return_proba=True)
     predictions_df = create_predictions_dataframe(
         predictions_arr=predictions_arr,
         class_names=data_schema.target_classes,

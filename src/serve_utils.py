@@ -9,6 +9,7 @@ from data_models.data_validator import validate_data
 from logger import get_logger, log_error
 from Classifier import Classifier
 from predict import create_predictions_dataframe
+from preprocessing.pipeline import run_pipeline
 from schema.data_schema import load_saved_schema
 from utils import read_json_as_dict
 
@@ -93,6 +94,8 @@ def transform_req_data_and_make_predictions(
     validate_data(data=data, data_schema=model_resources.data_schema, is_train=False)
     data = data.drop(columns=model_resources.data_schema.id)
     logger.info("Transforming data sample(s)...")
+
+    data = run_pipeline(data, model_resources.data_schema, training=False)
 
     logger.info("Making predictions...")
     predictions_arr = Classifier.predict_with_model(model_resources.predictor_model, data, return_proba=True)

@@ -33,7 +33,7 @@ def run_pipeline(input_data: pd.DataFrame, schema: BinaryClassificationSchema, t
     else:
         imputation_dict = load(paths.IMPUTATION_FILE_PATH)
         for f in schema.features:
-            input_data[f].fillna(imputation_dict[f], inplace=True)
+            input_data[f].fillna(imputation_dict.get(f, input_data[f].mode()[0]), inplace=True)
         input_data = normalize(input_data, schema, scaler='predict')
         input_data = encode(input_data, schema, encoder='predict')
 

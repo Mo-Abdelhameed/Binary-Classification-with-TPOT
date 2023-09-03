@@ -11,40 +11,6 @@ from src.data_models.schema_validator import (
 )
 
 
-@pytest.fixture
-def schema_dict():
-    # define a valid schema as a Python dictionary
-    valid_schema = {
-        "title": "test dataset",
-        "description": "test dataset",
-        "modelCategory": "binary_classification",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "id", "description": "unique identifier."},
-        "target": {
-            "name": "target_field",
-            "description": "some target desc.",
-            "classes": ["A", "B"],
-        },
-        "features": [
-            {
-                "name": "numeric_feature_1",
-                "description": "some desc.",
-                "dataType": "NUMERIC",
-                "example": 50,
-                "nullable": True,
-            },
-            {
-                "name": "categorical_feature_1",
-                "description": "some desc.",
-                "dataType": "CATEGORICAL",
-                "categories": ["A", "B", "C"],
-                "nullable": True,
-            },
-        ],
-    }
-    return valid_schema
-
 # Tests for ID
 def test_valid_id():
     """

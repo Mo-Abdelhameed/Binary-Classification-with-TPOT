@@ -1,47 +1,6 @@
 import pandas as pd
 import pytest
 from src.data_models.prediction_data_model import validate_predictions
-from src.schema.data_schema import BinaryClassificationSchema
-
-
-@pytest.fixture
-def schema_dict():
-    # define a valid schema as a Python dictionary
-    valid_schema = {
-        "title": "test dataset",
-        "description": "test dataset",
-        "modelCategory": "binary_classification",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "id", "description": "unique identifier."},
-        "target": {
-            "name": "target_field",
-            "description": "some target desc.",
-            "classes": ["A", "B"],
-        },
-        "features": [
-            {
-                "name": "numeric_feature_1",
-                "description": "some desc.",
-                "dataType": "NUMERIC",
-                "example": 50,
-                "nullable": True,
-            },
-            {
-                "name": "categorical_feature_1",
-                "description": "some desc.",
-                "dataType": "CATEGORICAL",
-                "categories": ["A", "B", "C"],
-                "nullable": True,
-            },
-        ],
-    }
-    return valid_schema
-
-
-@pytest.fixture
-def schema_provider(schema_dict):
-    return BinaryClassificationSchema(schema_dict)
 
 
 @pytest.fixture
@@ -49,8 +8,8 @@ def test_key():
     # define the test_key as a pandas DataFrame
     test_key_df = pd.DataFrame(
         {
-            "id": [1, 2, 3, 4, 5],
-            "target_field": ["A", "B", "A", "B", "A"],
+            "id": [1, 2, 3, 4],
+            "target_field": ["A", "B", "A", "B"],
         }
     )
     return test_key_df
@@ -61,9 +20,9 @@ def predictions():
     # define a valid predictions DataFrame
     valid_predictions_df = pd.DataFrame(
         {
-            "id": [1, 2, 3, 4, 5],
-            "A": [0.9, 0.2, 0.8, 0.1, 0.85],
-            "B": [0.1, 0.8, 0.2, 0.9, 0.15],
+            "id": [1, 2, 3, 4],
+            "0": [0.8, 0.1, 0.8, 0.1],
+            "1": [0.2, 0.8, 0.1, 0.9]
         }
     )
     return valid_predictions_df
@@ -73,8 +32,8 @@ def predictions():
 valid_predictions = pd.DataFrame(
     {
         "id": [1, 2, 3, 4, 5],
-        "A": [0.9, 0.2, 0.8, 0.1, 0.85],
-        "B": [0.1, 0.8, 0.2, 0.9, 0.15],
+        "0": [0.9, 0.2, 0.8, 0.1, 0.85],
+        "1": [0.1, 0.8, 0.2, 0.9, 0.15],
     }
 )
 
@@ -104,7 +63,7 @@ def test_validate_data_with_empty_file(schema_provider, predictions):
 
 
 def test_validate_data_with_missing_class_columns(schema_provider, predictions):
-    predictions_missing_class = predictions.drop(columns=["A"])
+    predictions_missing_class = predictions.drop(columns=["0"])
     with pytest.raises(ValueError) as exc_info:
         _ = validate_predictions(predictions_missing_class, schema_provider)
     assert "ValueError: Malformed predictions file. Target field(s) " in str(
@@ -116,7 +75,7 @@ def test_validate_data_with_missing_class_columns(schema_provider, predictions):
 def test_validate_data_with_invalid_probabilities(schema_provider, predictions):
     predictions_invalid_probabilities = predictions.copy()
     # include invalid probabilities
-    predictions_invalid_probabilities["A"] = [-0.1, 0.5, 0.6, 1.2, 0.8]
+    predictions_invalid_probabilities["0"] = [-0.1, 0.5, 0.6, 1.2]
     with pytest.raises(ValueError) as exc_info:
         _ = validate_predictions(predictions_invalid_probabilities, schema_provider)
     assert "ValueError: Invalid probabilities in predictions file. " in str(

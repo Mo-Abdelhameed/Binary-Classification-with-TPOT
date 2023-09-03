@@ -1,12 +1,12 @@
 import os
 import pytest
 from config.paths import INPUT_SCHEMA_DIR
-from schema.data_schema import (
+from src.schema.data_schema import (
     SCHEMA_FILE_NAME,
-    BinaryClassificationSchema,
     load_json_data_schema,
     load_saved_schema,
     save_schema,
+    BinaryClassificationSchema,
 )
 
 
@@ -15,190 +15,88 @@ def input_schema_dir():
     return INPUT_SCHEMA_DIR
 
 
-@pytest.fixture
-def schema_provider():
-    schema_dict = {
-        "modelCategory": "binary_classification",
-        "title": "Test Title",
-        "description": "Test description",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "Test ID"},
-        "target": {"name": "Test Target", "classes": ["0", "1"], "nullable": False},
-        "features": [{"name": "Test feature", "dataType": "NUMERIC", "nullable": True}],
-    }
-    return BinaryClassificationSchema(schema_dict)
-
-
-def test_init():
+def test_init(schema_provider):
     """
     Test the initialization of BinaryClassificationSchema class with a valid schema
     dictionary.
 
     Asserts that the properties of the schema object match the input schema dictionary.
     """
-    # Given
-    schema_dict = {
-        "modelCategory": "binary_classification",
-        "title": "Test Title",
-        "description": "Test description",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "Test ID"},
-        "target": {"name": "Test Target", "classes": ["0", "1"], "nullable": False},
-        "features": [{"name": "Test feature", "dataType": "NUMERIC", "nullable": True}],
-    }
-
-    # When
-    schema = BinaryClassificationSchema(schema_dict)
-
-    # Then
+    schema = schema_provider
     assert schema.model_category == "binary_classification"
-    assert schema.title == "Test Title"
-    assert schema.description == "Test description"
+    assert schema.title == "test dataset"
+    assert schema.description == "test dataset"
     assert schema.schema_version == 1.0
     assert schema.input_data_format == "CSV"
-    assert schema.id == "Test ID"
-    assert schema.target == "Test Target"
+    assert schema.id == "id"
+    assert schema.target == "target_field"
     assert schema.target_classes == ["0", "1"]
-    assert schema.numeric_features == ["Test feature"]
-    assert schema.categorical_features == []
-    assert schema.features == ["Test feature"]
-    assert schema.all_fields == ["Test ID", "Test Target", "Test feature"]
+    assert schema.numeric_features == ["numeric_feature_1", "numeric_feature_2"]
+    assert schema.categorical_features == ["categorical_feature_1", "categorical_feature_2"]
+    assert schema.features == ["numeric_feature_1", "numeric_feature_2", "categorical_feature_1", "categorical_feature_2"]
+    assert schema.all_fields == ["id", "target_field", "numeric_feature_1", "numeric_feature_2", "categorical_feature_1", "categorical_feature_2"]
 
 
-def test_get_allowed_values_for_categorical_feature():
+def test_get_allowed_values_for_categorical_feature(schema_provider):
     """
     Test the method to get allowed values for a categorical feature.
     Asserts that the allowed values match the input schema dictionary.
     Also tests for a ValueError when trying to get allowed values for a non-existent
     feature.
     """
-    # Given
-    schema_dict = {
-        "modelCategory": "binary_classification",
-        "title": "Test Title",
-        "description": "Test description",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "Test ID"},
-        "target": {"name": "Test Target", "classes": ["0", "1"]},
-        "features": [
-            {"name": "Test feature 1", "dataType": "NUMERIC", "nullable": True},
-            {
-                "name": "Test feature 2",
-                "dataType": "CATEGORICAL",
-                "categories": ["A", "B"],
-                "nullable": True,
-            },
-        ],
-    }
-    schema = BinaryClassificationSchema(schema_dict)
 
     # When
-    allowed_values = schema.get_allowed_values_for_categorical_feature("Test feature 2")
+    allowed_values = schema_provider.get_allowed_values_for_categorical_feature("categorical_feature_2")
 
     # Then
-    assert allowed_values == ["A", "B"]
+    assert allowed_values == [1, 2, 3, 4, 5]
 
     # When / Then
     with pytest.raises(ValueError):
-        schema.get_allowed_values_for_categorical_feature("Invalid feature")
+        schema_provider.get_allowed_values_for_categorical_feature("Invalid feature")
 
 
-def test_get_example_value_for_numeric_feature():
+def test_get_example_value_for_numeric_feature(schema_provider):
     """
     Test the method to get an example value for a numeric feature.
     Asserts that the example value matches the input schema dictionary.
     Also tests for a ValueError when trying to get an example value for a non-existent
     feature.
     """
-    # Given
-    schema_dict = {
-        "modelCategory": "binary_classification",
-        "title": "Test Title",
-        "description": "Test description",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "Test ID"},
-        "target": {"name": "Test Target", "classes": ["0", "1"]},
-        "features": [
-            {
-                "name": "Test feature 1",
-                "dataType": "NUMERIC",
-                "example": 123.45,
-                "nullable": True,
-            },
-            {
-                "name": "Test feature 2",
-                "dataType": "CATEGORICAL",
-                "categories": ["A", "B"],
-                "nullable": True,
-            },
-        ],
-    }
-    schema = BinaryClassificationSchema(schema_dict)
+
+    schema = schema_provider
 
     # When
-    example_value = schema.get_example_value_for_feature("Test feature 1")
+    example_value = schema.get_example_value_for_feature("numeric_feature_1")
 
     # Then
-    assert example_value == 123.45
+    assert example_value == 50
 
     # When / Then
     with pytest.raises(ValueError):
         schema.get_example_value_for_feature("Invalid feature")
 
 
-def test_get_description_for_id_target_and_features():
+def test_get_description_for_id_target_and_features(schema_dict):
     """
     Test the methods to get descriptions for the id, target, and features.
     Asserts that the descriptions match the input schema dictionary.
     Also tests for a ValueError when trying to get a description for a non-existent
     feature.
     """
-    # Given
-    schema_dict = {
-        "modelCategory": "binary_classification",
-        "title": "Test Title",
-        "description": "Test description",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {"name": "Test ID", "description": "ID field"},
-        "target": {
-            "name": "Test Target",
-            "description": "Target field",
-            "classes": ["0", "1"],
-        },
-        "features": [
-            {
-                "name": "Test feature 1",
-                "dataType": "NUMERIC",
-                "description": "Numeric feature",
-                "nullable": True,
-            },
-            {
-                "name": "Test feature 2",
-                "dataType": "CATEGORICAL",
-                "description": "Categorical feature",
-                "categories": ["A", "B"],
-                "nullable": True,
-            },
-        ],
-    }
     schema = BinaryClassificationSchema(schema_dict)
 
     # When
     id_description = schema.id_description
     target_description = schema.target_description
-    feature_1_description = schema.get_description_for_feature("Test feature 1")
-    feature_2_description = schema.get_description_for_feature("Test feature 2")
+    feature_1_description = schema.get_description_for_feature("numeric_feature_1")
+    feature_2_description = schema.get_description_for_feature("numeric_feature_1")
 
     # Then
-    assert id_description == "ID field"
-    assert target_description == "Target field"
-    assert feature_1_description == "Numeric feature"
-    assert feature_2_description == "Categorical feature"
+    assert id_description == "unique identifier."
+    assert target_description == "some target desc."
+    assert feature_1_description == "some desc."
+    assert feature_2_description == "some desc."
 
     # When / Then
     with pytest.raises(ValueError):
@@ -214,19 +112,44 @@ def test_is_feature_nullable():
     """
     # Given
     schema_dict = {
-        "modelCategory": "binary_classification",
-        "title": "Test Title",
-        "description": "Test description",
+        "title": "test dataset",
+        "description": "test dataset",
+        "modelCategory": "multiclass_classification",
         "schemaVersion": 1.0,
         "inputDataFormat": "CSV",
-        "id": {"name": "Test ID", "nullable": False},
-        "target": {"name": "Test Target", "classes": ["0", "1"], "nullable": False},
+        "id": {"name": "id", "description": "unique identifier."},
+        "target": {
+            "name": "target_field",
+            "description": "some target desc.",
+            "classes": ["A", "B"],
+        },
         "features": [
-            {"name": "Test feature 1", "dataType": "NUMERIC", "nullable": True},
             {
-                "name": "Test feature 2",
+                "name": "numeric_feature_1",
+                "description": "some desc.",
+                "dataType": "NUMERIC",
+                "example": 50,
+                "nullable": True,
+            },
+            {
+                "name": "numeric_feature_2",
+                "description": "some desc.",
+                "dataType": "NUMERIC",
+                "example": 0.5,
+                "nullable": False,
+            },
+            {
+                "name": "categorical_feature_1",
+                "description": "some desc.",
                 "dataType": "CATEGORICAL",
-                "categories": ["A", "B"],
+                "categories": ["A", "B", "C"],
+                "nullable": True,
+            },
+            {
+                "name": "categorical_feature_2",
+                "description": "some desc.",
+                "dataType": "CATEGORICAL",
+                "categories": ["P", "Q", "R", "S", "T"],
                 "nullable": False,
             },
         ],
@@ -234,13 +157,13 @@ def test_is_feature_nullable():
     schema = BinaryClassificationSchema(schema_dict)
 
     # When
-    is_nullable = schema.is_feature_nullable("Test feature 1")
+    is_nullable = schema.is_feature_nullable("numeric_feature_1")
 
     # Then
     assert is_nullable is True
 
     # When
-    is_not_nullable = schema.is_feature_nullable("Test feature 2")
+    is_not_nullable = schema.is_feature_nullable("numeric_feature_2")
 
     # Then
     assert is_not_nullable is False
@@ -276,7 +199,6 @@ def test_save_and_load_schema(tmpdir, schema_provider):
 
     # Load the schema using the load_saved_schema function
     loaded_schema = load_saved_schema(save_dir_path)
-
     # Check if the loaded schema is an instance of BinaryClassificationSchema
     assert isinstance(loaded_schema, BinaryClassificationSchema)
     assert loaded_schema.model_category == "binary_classification"

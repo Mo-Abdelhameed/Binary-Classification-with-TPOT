@@ -46,26 +46,51 @@ def generate_schema_and_data(rows: int, columns: int) -> Tuple[Dict, pd.DataFram
     """
     # define schema
     schema = {
-        "title": "Generated dataset",
-        "description": "ID",
+        "title": "test dataset",
+        "description": "test dataset",
         "modelCategory": "binary_classification",
         "schemaVersion": 1.0,
         "inputDataFormat": "CSV",
-        "id": {
-            "name": "id",
-            "description": "A unique identifier for each record in the dataset.",
-        },
+        "id": {"name": "id", "description": "unique identifier."},
         "target": {
-            "name": "target",
-            "description": "A multiclass variable indicating the class \
-                (class_0 = No, class_1 = Yes).",
-            "classes": ["class_0", "class_1"],
+            "name": "target_field",
+            "description": "some target desc.",
+            "classes": ["0", "1"],
         },
-        "features": [],
+        "features": [
+            {
+                "name": "numeric_feature_1",
+                "description": "some desc.",
+                "dataType": "NUMERIC",
+                "example": 50,
+                "nullable": True,
+            },
+            {
+                "name": "numeric_feature_2",
+                "description": "some desc.",
+                "dataType": "NUMERIC",
+                "example": 0.5,
+                "nullable": False,
+            },
+            {
+                "name": "categorical_feature_1",
+                "description": "some desc.",
+                "dataType": "CATEGORICAL",
+                "categories": ["A", "B", "C"],
+                "nullable": True,
+            },
+            {
+                "name": "categorical_feature_2",
+                "description": "some desc.",
+                "dataType": "CATEGORICAL",
+                "categories": ["A", "B", "C", "D", "E"],
+                "nullable": False,
+            },
+        ],
     }
 
     # create features in schema
-    for i in range(1, columns + 1):
+    for i in range(3, columns + 1):
         feature = {
             "name": f"numeric_feature_{i}",
             "description": f"Numeric feature {i}",
@@ -78,17 +103,23 @@ def generate_schema_and_data(rows: int, columns: int) -> Tuple[Dict, pd.DataFram
     # create dataframe
     data_dict = {}
     for feature in schema["features"]:
-        # if feature is nullable, create an array with some nulls
-        if feature["nullable"]:
-            data = np.where(np.random.rand(rows) > 0.05, np.random.rand(rows), np.nan)
+        if feature["dataType"] == "NUMERIC":
+            # if feature is nullable, create an array with some nulls
+            if feature["nullable"]:
+                data = np.where(np.random.rand(rows) > 0.05, np.random.rand(rows), np.nan)
+            else:
+                data = np.random.rand(rows)
         else:
-            data = np.random.rand(rows)
+            if feature["nullable"]:
+                data = np.where(np.random.rand(rows) > 0.05, np.random.choice(feature['categories']), np.nan)
+            else:
+                data = np.random.choice(feature['categories'])
 
         data_dict[feature["name"]] = data
 
     # add id and target
     data_dict["id"] = np.arange(rows)
-    data_dict["target"] = np.random.choice(["class_0", "class_1"], rows)
+    data_dict["target_field"] = np.random.choice(["0", "1"], rows)
 
     df = pd.DataFrame(data_dict)
 

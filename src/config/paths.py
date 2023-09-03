@@ -44,7 +44,7 @@ OUTPUT_DIR = os.path.join(MODEL_INPUTS_OUTPUTS, "outputs")
 PREDICTIONS_DIR = os.path.join(OUTPUT_DIR, "predictions")
 # Name of the file containing the predictions
 PREDICTIONS_FILE_PATH = os.path.join(PREDICTIONS_DIR, "predictions.csv")
-
+MODEL_CONFIG_FILE_PATH = os.path.join(ROOT_DIR, 'model_config.json')
 # Path to logs directory inside outputs directory
 ERRORS_DIR = os.path.join(OUTPUT_DIR, "errors")
 # Error file paths

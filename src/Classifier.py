@@ -7,10 +7,11 @@ from sklearn.exceptions import NotFittedError
 from schema.data_schema import BinaryClassificationSchema
 from tpot import TPOTClassifier
 
+
 PREDICTOR_FILE_NAME = 'predictor.joblib'
 
 
-class Classifier(TPOTClassifier):
+class Classifier:
     """A wrapper class for the binary classifier.
 
         This class provides a consistent interface that can be used with other
@@ -21,12 +22,12 @@ class Classifier(TPOTClassifier):
 
     def __init__(self, train_input: pd.DataFrame, schema: BinaryClassificationSchema):
         """Construct a new Binary Classifier."""
-        super().__init__(generations=5,  # Number of generations for optimization
-                         population_size=20,  # Number of individuals in each generation
-                         verbosity=2,  # Verbosity level (0 to 3)
-                         random_state=42,  # Random seed for reproducibility
-                         n_jobs=-1,  # Number of CPU cores to use (-1 to use all available cores)
-                         config_dict='TPOT sparse', )
+        self.tpot = TPOTClassifier(generations=5,  # Number of generations for optimization
+                                   population_size=20,  # Number of individuals in each generation
+                                   verbosity=2,  # Verbosity level (0 to 3)
+                                   random_state=42,  # Random seed for reproducibility
+                                   n_jobs=-1,  # Number of CPU cores to use (-1 to use all available cores)
+                                   )
         self._is_trained: bool = False
         self.train_input = train_input
         self.schema = schema
@@ -38,7 +39,7 @@ class Classifier(TPOTClassifier):
         """Train the model on the provided data"""
         x_train = self.train_input.drop(columns=[self.schema.target])
         y_train = self.train_input[self.schema.target]
-        self.fit(x_train, y_train)
+        self.tpot.fit(x_train, y_train)
         self._is_trained = True
 
     def predict(self, inputs: pd.DataFrame) -> np.ndarray:
@@ -49,7 +50,7 @@ class Classifier(TPOTClassifier):
         Returns:
             Union[pd.DataFrame, pd.Series]: The output predictions.
         """
-        return self.predict(inputs)
+        return self.tpot.predict(inputs)
 
     def predict_proba(self, inputs: pd.DataFrame) -> np.ndarray:
         """Predict class probabilities for the given data.
@@ -59,7 +60,7 @@ class Classifier(TPOTClassifier):
         Returns:
             numpy.ndarray: The predicted class probabilities.
         """
-        return self.predict_proba(inputs)
+        return self.tpot.predict_proba(inputs)
 
     def save(self, model_dir_path: str) -> None:
         """Save the binary classifier to disk.
@@ -70,7 +71,7 @@ class Classifier(TPOTClassifier):
 
         if not self._is_trained:
             raise NotFittedError("Model is not fitted yet.")
-        joblib.dump(self.fitted_pipeline_, os.path.join(model_dir_path, PREDICTOR_FILE_NAME))
+        joblib.dump(self.tpot.fitted_pipeline_, os.path.join(model_dir_path, PREDICTOR_FILE_NAME))
 
     @classmethod
     def load(cls, model_dir_path: str) -> "Classifier":
@@ -97,6 +98,7 @@ class Classifier(TPOTClassifier):
         Returns:
             Union[pd.DataFrame, pd.Series]: The output predictions.
         """
+
         return classifier.predict_proba(data) if return_proba else classifier.predict(data)
 
     @classmethod

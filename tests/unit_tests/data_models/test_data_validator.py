@@ -7,98 +7,6 @@ from schema.data_schema import BinaryClassificationSchema
 from src.data_models.data_validator import validate_data
 
 
-@pytest.fixture
-def schema_dict():
-    """Define schema as dict"""
-    schema_dict = {
-        "title": "Exclusive-Or dataset",
-        "description": "Synthetically generated 5-dimensional Exclusive-Or (XOR) dataset.",
-        "modelCategory": "binary_classification",
-        "schemaVersion": 1.0,
-        "inputDataFormat": "CSV",
-        "id": {
-            "name": "id",
-            "description": "unique identifier"
-        },
-        "target": {
-            "name": "target",
-            "description": "binary class (0 or 1)",
-            "classes": [
-                "0",
-                "1"
-            ]
-        },
-        "features": [
-            {
-                "name": "x1",
-                "description": "feature 1 of synthetic XOR data",
-                "dataType": "NUMERIC",
-                "example": 0.8179,
-                "nullable": False
-            },
-            {
-                "name": "x2",
-                "description": "feature 2 of synthetic XOR data",
-                "dataType": "NUMERIC",
-                "example": 0.551,
-            },
-            {
-                "name": "x3",
-                "description": "feature 3 of synthetic XOR data",
-                "dataType": "NUMERIC",
-                "example": 0.4198,
-            },
-            {
-                "name": "x4",
-                "description": "feature 4 of synthetic XOR data",
-                "dataType": "NUMERIC",
-                "example": 0.0987,
-            },
-            {
-                "name": "x5",
-                "description": "feature 5 of synthetic XOR data",
-                "dataType": "NUMERIC",
-                "example": 0.811,
-            }
-        ],
-    }
-    return schema_dict
-
-
-@pytest.fixture
-def schema_provider(schema_dict):
-    """Define schema as BinaryClassificationSchema"""
-    return BinaryClassificationSchema(schema_dict)
-
-
-@pytest.fixture
-def sample_train_data():
-    data = {
-        'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        'x1': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1],
-        'x2': [3, 1, 0, 1, 2, 3, 4, 5, 6, 7],
-        'x3': [4, 1, 0, 1, 2, 6, 7, 75, 66, 57],
-        'x4': [77, 1, 0, 1, 2, 3, 84, 5, 6, 37],
-        'x5': [66, 145, 131, 1, 82, 3, 54, 445, 62, 71],
-        'target': [0, 1, 1, 1, 0, 0, 0, 1, 1, 0]
-    }
-    return pd.DataFrame(data)
-
-
-@pytest.fixture
-def sample_test_data():
-    data = {
-        'id': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        'x1': [1, 2, 3, 1, 2, 3, 1, 2, 3, 1],
-        'x2': [3, 1, 0, 1, 2, 3, 4, 5, 6, 7],
-        'x3': [4, 1, 0, 1, 2, 6, 7, 75, 66, 57],
-        'x4': [77, 1, 0, 1, 2, 3, 84, 5, 6, 37],
-        'x5': [66, 145, 131, 1, 82, 3, 54, 445, 62, 71],
-        'target': [0, 1, 1, 1, 0, 0, 0, 1, 1, 0]
-    }
-    return pd.DataFrame(data)
-
-
 def test_validate_data_correct_train_data(
     schema_provider: Any,
     sample_train_data: pd.DataFrame,
@@ -171,7 +79,7 @@ def test_validate_data_missing_feature_column_train_data(
         sample_train_data (pd.DataFrame): A sample training DataFrame with a missing
                                           feature column.
     """
-    missing_feature_data = sample_train_data.drop(columns=["x1"])
+    missing_feature_data = sample_train_data.drop(columns=["numeric_feature_1"])
     with pytest.raises(ValueError):
         validate_data(missing_feature_data, schema_provider, True)
 
@@ -191,7 +99,7 @@ def test_validate_data_missing_feature_column_test_data(
         sample_test_data (pd.DataFrame): A sample testing DataFrame with a missing
                                          feature column.
     """
-    missing_feature_data = sample_test_data.drop(columns=["x1"])
+    missing_feature_data = sample_test_data.drop(columns=["numeric_feature_1"])
     with pytest.raises(ValueError):
         validate_data(missing_feature_data, schema_provider, False)
 
@@ -253,7 +161,7 @@ def test_validate_data_missing_target_column_train_data(
         sample_train_data (pd.DataFrame): A sample training DataFrame with a missing
                                           target column.
     """
-    missing_target_data = sample_train_data.drop(columns=["target"])
+    missing_target_data = sample_train_data.drop(columns=["target_field"])
     with pytest.raises(ValueError):
         validate_data(missing_target_data, schema_provider, True)
 
@@ -300,7 +208,7 @@ def test_validate_data_non_nullable_feature_contains_null_values(
                                           non-nullable feature containing null values.
     """
     null_feature_data = sample_train_data.copy()
-    null_feature_data.loc[0, "x1"] = None
+    null_feature_data.loc[0, "numeric_feature_2"] = None
     with pytest.raises(ValueError):
         validate_data(null_feature_data, schema_provider, True)
 
@@ -323,7 +231,7 @@ def test_validate_data_numeric_feature_contains_non_numeric_value(
                                         numeric feature containing non-numeric values.
     """
     non_numeric_feature_data = sample_train_data.copy()
-    non_numeric_feature_data.loc[0, "x1"] = "non-numeric"
+    non_numeric_feature_data.loc[0, "numeric_feature_1"] = "non-numeric"
     with pytest.raises(ValueError):
         validate_data(non_numeric_feature_data, schema_provider, True)
 

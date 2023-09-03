@@ -8,10 +8,18 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
+from Classifier import Classifier
 from src.schema.data_schema import BinaryClassificationSchema
 from src.serve import create_app
 from src.serve_utils import get_model_resources
 from src.train import run_training
+
+
+@pytest.fixture
+def classifier(sample_train_data, schema_provider):
+    """Define classifier fixture"""
+    classifier = Classifier(sample_train_data, schema_provider)
+    return classifier
 
 
 @pytest.fixture
@@ -27,7 +35,7 @@ def schema_dict():
         "target": {
             "name": "target_field",
             "description": "some target desc.",
-            "classes": ["A", "B"],
+            "classes": ["0", "1"],
         },
         "features": [
             {
@@ -55,7 +63,7 @@ def schema_dict():
                 "name": "categorical_feature_2",
                 "description": "some desc.",
                 "dataType": "CATEGORICAL",
-                "categories": ["P", "Q", "R", "S", "T"],
+                "categories": ["A", "B", "C", "D", "E"],
                 "nullable": False,
             },
         ],
@@ -108,17 +116,17 @@ def preprocessing_config_file_path(preprocessing_config, tmpdir):
 def sample_data():
     """Fixture to create a larger sample DataFrame for testing"""
     np.random.seed(0)
-    N = 100
+    n = 100
     data = pd.DataFrame(
         {
-            "id": range(1, N + 1),
-            "numeric_feature_1": np.random.randint(1, 100, size=N),
-            "numeric_feature_2": np.random.normal(0, 1, size=N),
-            "categorical_feature_1": np.random.choice(["A", "B", "C"], size=N),
+            "id": range(1, n + 1),
+            "numeric_feature_1": np.random.randint(1, 100, size=n),
+            "numeric_feature_2": np.random.normal(0, 1, size=n),
+            "categorical_feature_1": np.random.choice(["A", "B", "C"], size=n),
             "categorical_feature_2": np.random.choice(
-                ["P", "Q", "R", "S", "T"], size=N
+                ["P", "Q", "R", "S", "T"], size=n
             ),
-            "target_field": np.random.choice(["A", "B"], size=N),
+            "target_field": np.random.choice(["0", "1"], size=n),
         }
     )
     return data
@@ -127,15 +135,16 @@ def sample_data():
 @pytest.fixture
 def sample_train_data(sample_data):
     """Fixture to create a larger sample DataFrame for testing"""
-    N_train = int(len(sample_data) * 0.8)
-    return sample_data.head(N_train)
+    n_train = int(len(sample_data) * 0.8)
+    return sample_data.head(n_train)
 
 
 @pytest.fixture
 def sample_test_data(sample_data):
     """Fixture to create a larger sample DataFrame for testing"""
-    N_test = int(len(sample_data) * 0.2)
-    return sample_data.tail(N_test)
+    n_test = int(len(sample_data) * 0.2)
+    sample_data.drop(columns='target_field', inplace=True)
+    return sample_data.tail(n_test)
 
 
 @pytest.fixture
@@ -202,25 +211,16 @@ def default_hyperparameters(config_dir_path):
 
 
 @pytest.fixture
-def default_hyperparameters_file_path(default_hyperparameters, tmpdir):
-    """Fixture to return default_hyperparameters file path in tmpdir"""
-    config_file_path = tmpdir.join("default_hyperparameters.json")
-    with open(config_file_path, "w") as file:
-        json.dump(default_hyperparameters, file)
-    return str(config_file_path)
-
-
-@pytest.fixture
 def predictions_df():
     """Fixture for creating a DataFrame representing predictions."""
     num_preds = 50
     # Create 5 random probabilities
-    probabilities_A = [random.uniform(0, 1) for _ in range(num_preds)]
+    probabilities_A = [random.uniform(0, 0.5) for _ in range(num_preds)]
     # Subtract each probability from 1 to create a complementary probability
     probabilities_B = [1 - p for p in probabilities_A]
 
     # Create a DataFrame with an 'id' column and two class probability
-    # columns 'A' and 'B'
+    # columns 'A', 'B' and 'C'
     df = pd.DataFrame(
         {
             "id": [
@@ -229,28 +229,11 @@ def predictions_df():
                 )
                 for _ in range(num_preds)
             ],
-            "A": probabilities_A,
-            "B": probabilities_B,
+            "0": probabilities_A,
+            "1": probabilities_B,
         }
     )
     return df
-
-
-@pytest.fixture
-def explainer_config(config_dir_path):
-    json_file_path = os.path.join(config_dir_path, "explainer.json")
-    with open(json_file_path, "r", encoding="utf-8") as file:
-        config = json.load(file)
-    return config
-
-
-@pytest.fixture
-def explainer_config_file_path(explainer_config, tmpdir):
-    """Fixture to create and save a sample explainer_config json"""
-    config_file_path = tmpdir.join("explainer.json")
-    with open(config_file_path, "w", encoding="utf-8") as file:
-        json.dump(explainer_config, file)
-    return str(config_file_path)
 
 
 @pytest.fixture
@@ -262,38 +245,11 @@ def test_resources_dir_path(tmpdir):
 
 
 @pytest.fixture
-def config_file_paths_dict(
-    default_hyperparameters_file_path,
-    explainer_config_file_path,
-    hpt_specs_file_path,
-    model_config_file_path,
-    preprocessing_config_file_path,
-):
-    """Define a fixture for the paths to all config files."""
-    return {
-        "default_hyperparameters_file_path": default_hyperparameters_file_path,
-        "explainer_config_file_path": explainer_config_file_path,
-        "hpt_specs_file_path": hpt_specs_file_path,
-        "model_config_file_path": model_config_file_path,
-        "preprocessing_config_file_path": preprocessing_config_file_path,
-    }
-
-
-@pytest.fixture
-def resources_paths_dict(test_resources_dir_path, model_config_file_path):
+def resources_paths_dict(test_resources_dir_path):
     """Define a fixture for the paths to the test model resources."""
     return {
         "saved_schema_dir_path": os.path.join(test_resources_dir_path, "schema"),
         "predictor_dir_path": os.path.join(test_resources_dir_path, "predictor"),
-        "preprocessing_dir_path": os.path.join(
-            test_resources_dir_path, "preprocessing"
-        ),
-        "model_config_file_path": model_config_file_path,
-        "explainer_dir_path": os.path.join(test_resources_dir_path, "explainer"),
-        "hpt_results_dir_path": os.path.join(test_resources_dir_path, "hpt"),
-        "predictions_file_path": os.path.join(
-            test_resources_dir_path, "predictions.csv"
-        ),
     }
 
 
@@ -308,7 +264,7 @@ def sample_request_data(schema_dict):
         if feature["dataType"] == "NUMERIC":
             sample_dict[feature["name"]] = feature["example"]
         elif feature["dataType"] == "CATEGORICAL":
-            sample_dict[feature["name"]] = feature["categories"][0]
+            sample_dict[feature["name"]] = np.random.choice(feature["categories"])
     return {"instances": [{**sample_dict}]}
 
 
@@ -335,7 +291,7 @@ def sample_response_data(schema_dict):
 
 
 @pytest.fixture
-def appp(
+def app(
     input_schema_dir,
     train_dir,
     resources_paths_dict: dict,
@@ -353,7 +309,7 @@ def appp(
     saved_schema_dir_path = resources_paths_dict["saved_schema_dir_path"]
     predictor_dir_path = resources_paths_dict["predictor_dir_path"]
 
-    # Run the training process without hyperparameter tuning
+    # Run the training process.
     run_training(
         input_schema_dir=input_schema_dir,
         saved_schema_dir_path=saved_schema_dir_path,
