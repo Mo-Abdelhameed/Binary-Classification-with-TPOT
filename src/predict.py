@@ -7,7 +7,7 @@ from logger import get_logger
 from Classifier import Classifier
 from preprocessing.pipeline import run_pipeline
 from schema.data_schema import load_json_data_schema
-from utils import read_csv_in_directory, save_dataframe_as_csv
+from utils import read_csv_in_directory, save_dataframe_as_csv, ResourceTracker
 
 warnings.filterwarnings('ignore')
 
@@ -82,16 +82,17 @@ def run_batch_predictions(
             input_schema_dir (str): Path to the schema file of the data
             return_proba (bool): If true, outputs the probabilities of the target classes.
         """
-    x_test = read_csv_in_directory(test_dir)
+    with ResourceTracker(logger, monitoring_interval=0.1):
+        x_test = read_csv_in_directory(test_dir)
 
-    model = Classifier.load(predictor_dir)
-    data_schema = load_json_data_schema(input_schema_dir)
-    ids = x_test[data_schema.id]
-    x_test = x_test.drop(columns=data_schema.id)
-    x_test = run_pipeline(x_test, data_schema, training=False)
+        model = Classifier.load(predictor_dir)
+        data_schema = load_json_data_schema(input_schema_dir)
+        ids = x_test[data_schema.id]
+        x_test = x_test.drop(columns=data_schema.id)
+        x_test = run_pipeline(x_test, data_schema, training=False)
 
-    logger.info("Making predictions...")
-    predictions_arr = Classifier.predict_with_model(model, x_test, return_proba=True)
+        logger.info("Making predictions...")
+        predictions_arr = Classifier.predict_with_model(model, x_test, return_proba=True)
     predictions_df = create_predictions_dataframe(
         predictions_arr=predictions_arr,
         class_names=data_schema.target_classes,
